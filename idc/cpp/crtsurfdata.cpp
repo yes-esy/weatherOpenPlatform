@@ -4,11 +4,12 @@
  * @Author       : 2900226123@qq.com
  * @Version      : 0.0.1
  * @LastEditors  : yes-esy 2900226123@qq.com
- * @LastEditTime : 2025-09-30 19:43:35
+ * @LastEditTime : 2025-09-30 20:10:48
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 #include "_public.h"
 using namespace idc;
+clogfile logFile; // 日志文件
 /**
  * 站点
  * 省 站号 站名 纬度 经度 海拔高度
@@ -22,12 +23,27 @@ struct sitePosition_t
     double longtitude;     // 经度
     double height;         // 高度
 };
-list<struct sitePosition_t> siteList; // 存放所有站点数据
-clogfile logFile;                     // 日志文件
-
+/**
+ * 观测数据
+ */
+struct surfData_t
+{
+    char siteId[11];   // 站点代码
+    char datetime[15]; // 数据时间: 格式yyyymmddhh24miss,精确到分钟，秒固定天00.
+    int t;             // 气温: 单位，0.1摄氏度
+    int p;             // 气压: 单位，0.1百帕
+    int u;             // 相对湿度:0-100之间的值
+    int wd;            // 风向:0~360之间的值
+    int wf;            // 风速:单位0.1m/s
+    int r;             // 降雨量:0.1mm
+    int vis;           // 能见度
+};
+list<struct sitePosition_t> siteList;        // 存放所有站点数据
+list<struct surfData_t> visDatalist;         // 观测数据列表容器
+char strDatetime[15];                        // 系统时间
 void EXIT(int sig);                          // 退出
 bool loadSitePosition(const string &inFile); // 加载站点数据
-
+void generateVisdata();                      // 生成观测数据存放在visDataList中
 int main(int argc, char *argv[])
 {
     // 站点参数文件  生成的测试数据存放的目录 本程序运行的日志 输出数据文件的格式
@@ -62,6 +78,13 @@ int main(int argc, char *argv[])
     {
         EXIT(-1);
     }
+    // 获取数据时间
+    memset(strDatetime, 0, sizeof(strDatetime));
+    ltime(strDatetime, "yyyymmddhh24miss"); // 获取系统当前时间
+    strncpy(strDatetime + 12, "00", 2);     // 把数据时间中的秒固定填00
+
+    // 生成观测数据；
+    generateVisdata();
 
     sleep(10);
 
@@ -120,4 +143,37 @@ bool loadSitePosition(const string &inFile)
     // }
 
     return true;
+}
+/**
+ * @brief        : 模拟生成每分钟观测数据存放在visDataList中
+ * @return        {void}
+ **/
+void generateVisdata()
+{
+    srand(time(0)); // 随机数种子
+
+    surfData_t surfData; // 观测数据结构体；
+
+    for (const auto &site : siteList) // 为每个站点生成观测数据
+    {
+        memset(&surfData, 0, sizeof(surfData_t)); // 初始化
+
+        strcpy(surfData.siteId, site.siteId);   // 站点代码
+        strcpy(surfData.datetime, strDatetime); // 填充时间
+        surfData.t = rand() % 350;              // 气温
+        surfData.p = rand() % 265 + 10000;      // 气压
+        surfData.u = rand() % 101;              // 相对湿度
+        surfData.wd = rand() % 360;             // 风向
+        surfData.wf = rand() % 150;             // 风速
+        surfData.r = rand() % 16;               // 降雨
+        surfData.vis = rand() % 5001 + 100000;  // 能见度
+        visDatalist.push_back(surfData);        // 放入容器
+    }
+
+    // 写入日志文件
+    for (const auto &data : visDatalist)
+    {
+        logFile.write("siteId=%s,datetime=%s,t=%d,p=%d,u=%d,wd=%d,wf=%d,r=%d,vis=%d\n",
+                      data.siteId, data.datetime, data.t, data.p, data.u, data.wd, data.wf, data.r, data.vis);
+    }
 }
