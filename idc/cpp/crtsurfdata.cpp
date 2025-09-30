@@ -3,16 +3,30 @@
  * @Description  :  生成气象站点观测的分钟数据
  * @Author       : 2900226123@qq.com
  * @Version      : 0.0.1
- * @LastEditors  : error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
- * @LastEditTime : 2025-09-29 15:53:39
+ * @LastEditors  : yes-esy 2900226123@qq.com
+ * @LastEditTime : 2025-09-30 19:43:35
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 #include "_public.h"
 using namespace idc;
+/**
+ * 站点
+ * 省 站号 站名 纬度 经度 海拔高度
+ */
+struct sitePosition_t
+{
+    char provinceName[31]; // 省名
+    char siteId[11];       // 站号
+    char siteName[31];     // 站明
+    double latitude;       // 纬度；
+    double longtitude;     // 经度
+    double height;         // 高度
+};
+list<struct sitePosition_t> siteList; // 存放所有站点数据
+clogfile logFile;                     // 日志文件
 
-clogfile logFile; // 日志文件
-
-void EXIT(int sig);
+void EXIT(int sig);                          // 退出
+bool loadSitePosition(const string &inFile); // 加载站点数据
 
 int main(int argc, char *argv[])
 {
@@ -43,7 +57,11 @@ int main(int argc, char *argv[])
     }
     logFile.write("crtsurfdata 开始运行。\n");
 
-    // 处理业务
+    // 加载站点数据
+    if (!loadSitePosition(argv[1]))
+    {
+        EXIT(-1);
+    }
 
     sleep(10);
 
@@ -52,11 +70,54 @@ int main(int argc, char *argv[])
 }
 /**
  * @brief        : 处理程序退出和信号2、15的处理函数
- * @param         {int} sig:
- * @return        {*}
-**/
+ * @param         {int} sig: 退出信号
+ * @return        {void}
+ **/
 void EXIT(int sig)
 {
-    logFile.write("程序退出，sig=%d\n\n",sig);
+    logFile.write("程序退出，sig=%d\n\n", sig);
     exit(0);
+}
+/**
+ * @brief        : 加载站点数据
+ * @param         {string &} inFile: 输入文件
+ * @return        {bool} : 加载成功返回true,失败返回false;
+ **/
+bool loadSitePosition(const string &inFile)
+{
+    cifile cInFile;            // 读取文件对象
+    if (!cInFile.open(inFile)) // 打开失败
+    {
+        logFile.write("cInFile.open(%s)failed.\n"); // 写入日志
+        return false;
+    }
+    string stringBuffer;            // 存放读取文件的每一行
+    cInFile.readline(stringBuffer); // 读取站点第一行,表头,不处理
+
+    ccmdstr cmdstr;                        // 用于拆分从文件中读取的行
+    sitePosition_t sitePosition;           // 站点数据结构体
+    while (cInFile.readline(stringBuffer)) // 一行一行读取
+    {
+        // logFile.write("stringBuffer=%s\n", stringBuffer.c_str());
+        cmdstr.splittocmd(stringBuffer, ",");             // 拆分字符串
+        memset(&sitePosition, 0, sizeof(sitePosition_t)); // 清空结构体
+
+        cmdstr.getvalue(0, sitePosition.provinceName, 30); // 省
+        cmdstr.getvalue(1, sitePosition.siteId, 10);       // 站点代码
+        cmdstr.getvalue(2, sitePosition.siteName, 30);     // 站名
+        cmdstr.getvalue(3, sitePosition.latitude);         // 纬度
+        cmdstr.getvalue(4, sitePosition.longtitude);       // 经度
+        cmdstr.getvalue(5, sitePosition.height);           // 高度
+        siteList.push_back(sitePosition);                  // 放入容器
+    }
+    // 不需要手动关闭文件, 析构函数已经实现
+
+    // 把容器中的全部数据写入日志
+    // for (const auto &site : siteList)
+    // {
+    //     logFile.write("provinceName=%s,siteId=%s,siteName=%s,latitude=%.2f,longtitude=%.2f,height=%.2f\n",\
+    //     site.provinceName,site.siteId,site.siteName,site.latitude,site.longtitude,site.height);
+    // }
+
+    return true;
 }
