@@ -4,7 +4,7 @@
  * @Author       : 2900226123@qq.com
  * @Version      : 0.0.1
  * @LastEditors  : yes-esy 2900226123@qq.com
- * @LastEditTime : 2025-09-30 20:10:48
+ * @LastEditTime : 2025-10-01 11:35:47
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 #include "_public.h"
@@ -38,20 +38,21 @@ struct surfData_t
     int r;             // 降雨量:0.1mm
     int vis;           // 能见度
 };
-list<struct sitePosition_t> siteList;        // 存放所有站点数据
-list<struct surfData_t> visDatalist;         // 观测数据列表容器
-char strDatetime[15];                        // 系统时间
-void EXIT(int sig);                          // 退出
-bool loadSitePosition(const string &inFile); // 加载站点数据
-void generateVisdata();                      // 生成观测数据存放在visDataList中
+list<struct sitePosition_t> siteList;                             // 存放所有站点数据
+list<struct surfData_t> visDatalist;                              // 观测数据列表容器
+char strDatetime[15];                                             // 系统时间
+void EXIT(int sig);                                               // 退出
+bool loadSitePosition(const string &inFile);                      // 加载站点数据
+void generateVisdata();                                           // 生成观测数据存放在visDataList中
+bool writeSurfFile(const string &outpath, const string &datafmt); // 将数据写入文件
 int main(int argc, char *argv[])
 {
     // 站点参数文件  生成的测试数据存放的目录 本程序运行的日志 输出数据文件的格式
-    if (argc != 4)
+    if (argc != 5)
     {
         // 如果参数非法，给出帮助文档。
-        cout << "Using:./crtsurfdata inifile outpath logfile \n";
-        cout << "Examples:/project/dataOpenPlatform/idc/bin/crtsurfdata /project/dataOpenPlatform/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata.log\n\n";
+        cout << "Using:./crtsurfdata inifile outpath logfile datafmt\n";
+        cout << "Examples:/project/dataOpenPlatform/idc/bin/crtsurfdata /project/dataOpenPlatform/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata.log csv,xml,json\n\n";
 
         cout << "本程序用于生成气象站点观测的分钟数据，程序每分钟运行一次，由调度模块启动。\n";
         cout << "inifile  气象站点参数文件名。\n";
@@ -86,7 +87,18 @@ int main(int argc, char *argv[])
     // 生成观测数据；
     generateVisdata();
 
-    sleep(10);
+    if (strstr(argv[4], "csv"))
+    {
+        writeSurfFile(argv[2], "csv");
+    }
+    if (strstr(argv[4], "xml"))
+    {
+        writeSurfFile(argv[2], "xml");
+    }
+    if (strstr(argv[4], "json"))
+    {
+        writeSurfFile(argv[2], "json");
+    }
 
     logFile.write("crtsurfdata 运行结束。\n");
     return 0;
@@ -171,9 +183,78 @@ void generateVisdata()
     }
 
     // 写入日志文件
+    // for (const auto &data : visDatalist)
+    // {
+    //     logFile.write("siteId=%s,datetime=%s,t=%.1f,p=%.1f,u=%d,wd=%d,wf=%.1f,r=%.1f,vis=%.1f\n",
+    //                   data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
+    // }
+}
+/**
+ * @brief        : 将数据写入文件
+ * @param         {string} &outpath: 写入文件的路径
+ * @param         {string} &datafmt: 写入数据的格式csv,xml,json等
+ * @return        {bool} : 成功返回true,失败返回false
+ **/
+bool writeSurfFile(const string &outpath, const string &datafmt)
+{
+    // 拼接文件名, eg: path/perfix_time_pid.fmt
+    string fileName = outpath + "/" + "SURF_ZH_" + strDatetime + "_" + to_string(getpid()) + "." + datafmt;
+    cofile outFile; // 写入数据文件对象
+
+    if (!outFile.open(fileName)) // 打开失败
+    {
+        logFile.write("outFile.open(%s) failed.\n", fileName.c_str());
+        return false;
+    }
+
+    // 把dataList容器中的观测数据写入文件
+    if (datafmt == "csv")
+    {
+        outFile.writeline("站点代码,数据时间,气温,气压,相对湿度,风向,风速,降水量,能见度\n"); // 写入表头
+    }
+    if (datafmt == "xml")
+    {
+        outFile.writeline("<data>\n");
+    }
+    if (datafmt == "json")
+    {
+        outFile.writeline("{\"data\":[\n");
+    }
+    int idx = 0;
+    int total = visDatalist.size();
     for (const auto &data : visDatalist)
     {
-        logFile.write("siteId=%s,datetime=%s,t=%d,p=%d,u=%d,wd=%d,wf=%d,r=%d,vis=%d\n",
-                      data.siteId, data.datetime, data.t, data.p, data.u, data.wd, data.wf, data.r, data.vis);
+        if (datafmt == "csv")
+        {
+            outFile.writeline("%s,%s,%.1f,%.1f,%d,%d,%.1f,%.1f,%.1f\n",
+                              data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
+        }
+        if (datafmt == "xml")
+        {
+            outFile.writeline("<siteId>%s</siteId><datetime>%s</datetime><t>%.1f</t><p>%.1f</p><u>%d</u>"
+                              "<wd>%d</wd><wf>%.1f</wf><r>%.1f</r><vis>%.1f</vis><endl/>\n",
+                              data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
+        }
+        if(datafmt == "json")
+        {
+            outFile.writeline("{\"siteId\":\"%s\",\"datetime\":\"%s\",\"t\":\"%.1f\",\"p\":\"%.1f\",\"u\":\"%d\",\"wd\":\"%d\",\"wf\":\"%.1f\",\"r\":\"%.1f\",\"vis\":\"%.1f\"}",
+                              data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
+            idx++;
+            if (idx < total)
+                outFile.writeline(",\n");
+            else
+                outFile.writeline("\n");
+        }
     }
+    if(datafmt == "xml")
+    {
+        outFile.writeline("</data>\n");
+    }
+    if(datafmt == "json")
+    {
+        outFile.writeline("]}\n");
+    }
+    outFile.closeandrename(); // 关闭临时文件,并改名正式文件
+    logFile.write("生成数据文件%s成功,数据时间%s,记录数%d。\n", fileName.c_str(), strDatetime, visDatalist.size());
+    return true;
 }
