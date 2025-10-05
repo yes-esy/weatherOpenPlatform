@@ -4,7 +4,7 @@
  * @Author       : yes-esy 2900226123@qq.com
  * @Version      : 0.0.1
  * @LastEditors  : yes-esy 2900226123@qq.com
- * @LastEditTime : 2025-10-05 15:07:22
+ * @LastEditTime : 2025-10-05 15:25:21
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 #include "_public.h"
@@ -42,7 +42,6 @@ int main(int argc, char *argv[])
     if (shmId < 0)
     {
         logFile.write("创建/获取共享内存(%x)失败.\n", SHMKEYP);
-        return -1;
     }
     // 将共享内存连接到当前进程的地址空间
     st_procinfo *shm = (st_procinfo *)shmat(shmId, 0, 0);
@@ -63,6 +62,7 @@ int main(int argc, char *argv[])
         if(iret == -1)
         {
             logFile.write("进程pid=%d(%s)已经不存在。\n",shm[i].pid,shm[i].pname);
+            memset(&shm[i], 0, sizeof( st_procinfo)); // 从共享内存中删除该记录。
             continue;
         }
         // 判断进程的心跳是否超时,如果超时,终止它
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
             continue;
         }
         // 已经超时
-        // logFile.write("进程pid=%d(%s)已经超时.\n",tmp.pid,tmp.pname);
+        logFile.write("进程pid=%d(%s)已经超时.\n",tmp.pid,tmp.pname);
 
         // 发送信号15,终止已超时的进程
         kill(tmp.pid,15);

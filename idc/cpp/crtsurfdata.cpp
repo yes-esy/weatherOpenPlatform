@@ -4,7 +4,7 @@
  * @Author       : 2900226123@qq.com
  * @Version      : 0.0.1
  * @LastEditors  : yes-esy 2900226123@qq.com
- * @LastEditTime : 2025-10-01 11:35:47
+ * @LastEditTime : 2025-10-05 15:12:58
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 #include "_public.h"
@@ -45,14 +45,16 @@ void EXIT(int sig);                                               // 退出
 bool loadSitePosition(const string &inFile);                      // 加载站点数据
 void generateVisdata();                                           // 生成观测数据存放在visDataList中
 bool writeSurfFile(const string &outpath, const string &datafmt); // 将数据写入文件
+cpactive procActive;                                              // 全局进程心跳对象
 int main(int argc, char *argv[])
 {
     // 站点参数文件  生成的测试数据存放的目录 本程序运行的日志 输出数据文件的格式
     if (argc != 5)
     {
         // 如果参数非法，给出帮助文档。
+
         cout << "Using:./crtsurfdata inifile outpath logfile datafmt\n";
-        cout << "Examples:/project/dataOpenPlatform/idc/bin/crtsurfdata /project/dataOpenPlatform/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata.log csv,xml,json\n\n";
+        cout << "Examples:/project/dataOpenPlatform/tools/bin/procctl 60 /project/dataOpenPlatform/idc/bin/crtsurfdata /project/dataOpenPlatform/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata.log csv,xml,json\n\n";
 
         cout << "本程序用于生成气象站点观测的分钟数据，程序每分钟运行一次，由调度模块启动。\n";
         cout << "inifile  气象站点参数文件名。\n";
@@ -66,6 +68,8 @@ int main(int argc, char *argv[])
     // 捕获到了2或15的信号
     signal(SIGINT, EXIT);
     signal(SIGTERM, EXIT);
+
+    procActive.addpinfo(10, "crtsurfdata"); // 把当前进程放入共享内存
     // 打开失败
     if (!logFile.open(argv[3]))
     {
@@ -235,7 +239,7 @@ bool writeSurfFile(const string &outpath, const string &datafmt)
                               "<wd>%d</wd><wf>%.1f</wf><r>%.1f</r><vis>%.1f</vis><endl/>\n",
                               data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
         }
-        if(datafmt == "json")
+        if (datafmt == "json")
         {
             outFile.writeline("{\"siteId\":\"%s\",\"datetime\":\"%s\",\"t\":\"%.1f\",\"p\":\"%.1f\",\"u\":\"%d\",\"wd\":\"%d\",\"wf\":\"%.1f\",\"r\":\"%.1f\",\"vis\":\"%.1f\"}",
                               data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
@@ -246,11 +250,11 @@ bool writeSurfFile(const string &outpath, const string &datafmt)
                 outFile.writeline("\n");
         }
     }
-    if(datafmt == "xml")
+    if (datafmt == "xml")
     {
         outFile.writeline("</data>\n");
     }
-    if(datafmt == "json")
+    if (datafmt == "json")
     {
         outFile.writeline("]}\n");
     }
