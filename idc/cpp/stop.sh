@@ -2,8 +2,8 @@
 # 停止调度程序
 killall -9 procctl
 # 停止其他的服务程序
-killall crtsurfdata
+killall crtsurfdata deleteFiles
 # 让其服务程序有足够的时间退出
 sleep 5
 # 强制杀死
-killall -9 crtsurfdata
+killall -9 crtsurfdata 

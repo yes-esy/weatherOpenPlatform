@@ -4,3 +4,6 @@
 
 # 本程序用于生成气象站点观测的分钟数据，程序每分钟运行一次，由调度模块启动。
 /project/dataOpenPlatform/tools/bin/procctl 60 /project/dataOpenPlatform/idc/bin/crtsurfdata /project/dataOpenPlatform/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata.log csv,xml,json
+
+# 定期删除/tmp/idc/surfdata目录下的文件
+/project/dataOpenPlatform/tools/bin/procctl 300 /project/dataOpenPlatform/tools/bin/deleteFiles /tmp/idc/surfdata \"*.xml,*.json\" 0.02

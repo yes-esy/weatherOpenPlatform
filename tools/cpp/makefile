@@ -11,7 +11,7 @@ CFLAGS = -g
 # CFLAGS = -O2
 
 
-all:procctl checkproc
+all:procctl checkproc deleteFiles
 
 procctl:procctl.cpp
 		g++ -g -o procctl procctl.cpp
@@ -20,5 +20,8 @@ procctl:procctl.cpp
 checkproc:checkproc.cpp
 		g++ $(CFLAGS) -o checkproc checkproc.cpp $(PUBINCL) $(PUBCPP)
 		cp -f checkproc ../bin/.
+deleteFiles:deleteFiles.cpp
+		g++ $(CFLAGS) -o deleteFiles deleteFiles.cpp $(PUBINCL) $(PUBCPP)
+		cp -f deleteFiles ../bin/.
 clean:
-		rm -rf procctl checkproc
+		rm -rf procctl checkproc deleteFiles
