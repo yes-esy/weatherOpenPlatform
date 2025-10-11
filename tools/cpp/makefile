@@ -11,8 +11,8 @@ CFLAGS = -g
 # CFLAGS = -O2
 
 
-all:procctl checkproc deleteFiles gzipFiles
-
+all:procctl checkproc deleteFiles gzipFiles ftpGetFiles
+ 
 procctl:procctl.cpp
 		g++ -g -o procctl procctl.cpp
 		cp -f procctl ../bin/.
@@ -20,11 +20,18 @@ procctl:procctl.cpp
 checkproc:checkproc.cpp
 		g++ $(CFLAGS) -o checkproc checkproc.cpp $(PUBINCL) $(PUBCPP)
 		cp -f checkproc ../bin/.
+
 deleteFiles:deleteFiles.cpp
 		g++ $(CFLAGS) -o deleteFiles deleteFiles.cpp $(PUBINCL) $(PUBCPP)
 		cp -f deleteFiles ../bin/.
-gzipFiles:deleteFiles.cpp
+
+gzipFiles:gzipFiles.cpp
 		g++ $(CFLAGS) -o gzipFiles gzipFiles.cpp $(PUBINCL) $(PUBCPP)
 		cp -f gzipFiles ../bin/.
+
+ftpGetFiles:ftpGetFiles.cpp
+		g++ $(CFLAGS) -o ftpGetFiles ftpGetFiles.cpp $(PUBINCL) $(PUBCPP) /project/dataOpenPlatform/public/libftp.a /project/dataOpenPlatform/public/_ftp.cpp
+		cp -f ftpGetFiles ../bin/.
+
 clean:
-		rm -rf procctl checkproc deleteFiles gzipFiles
+		rm -rf procctl checkproc deleteFiles gzipFiles ftpGetFiles
