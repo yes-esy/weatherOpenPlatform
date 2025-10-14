@@ -1,10 +1,10 @@
 /**
- * @FilePath     : /dataOpenPlatform/tools/cpp/ftpGetFiles.cpp
- * @Description  :  文件下载模块
+ * @FilePath     : /dataOpenPlatform/tools/cpp/ftpPutFiles.cpp
+ * @Description  :  文件上传模块
  * @Author       : yes-esy 2900226123@qq.com
  * @Version      : 0.0.1
  * @LastEditors  : yes-esy 2900226123@qq.com
- * @LastEditTime : 2025-10-11 20:47:54
+ * @LastEditTime : 2025-10-11 19:46:32
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 
@@ -17,20 +17,18 @@ using namespace idc;
  */
 struct arg_t
 {
-    char host[31];                // ftp服务端的ip和端口
-    int modes;                    // 传输模式: 1.passive被动 2.active 主动
-    char username[31];            // 登录用户名
-    char password[31];            // 登录密码
-    char remotePath[256];         // 远程服务器存放文件的目录
-    char localPath[256];          // 本地存放文件的目录
-    char matchName[256];          // 待下载文件的匹配规则
-    char listFileName[256];       // 下载前列出服务器文件名的文件。
-    int pType;                    // 下载后服务器端的处理方式
-    char remotePathBak[256];      // 远程备份目录
-    bool checkEditTime;           // 是否需要检查服务端文件的时间
-    char downloadedFileList[256]; // 已下载成功文件名清单
-    int timeout;                  // 进程心跳超时的时间。
-    char procName[51];            // 进程名
+    char host[31];            // ftp服务端的ip和端口
+    int modes;                // 传输模式: 1.passive被动 2.active 主动
+    char username[31];        // 登录用户名
+    char password[31];        // 登录密码
+    char remotePath[256];     // 远程服务器存放文件的目录
+    char localPath[256];      // 本地存放文件的目录
+    char matchName[256];      // 待下载文件的匹配规则
+    int pType;                // 下载后服务器端的处理方式 : 1.不处理 2. 删除本地文件 3. 备份
+    char localPathBak[256];   // 远程备份目录
+    char uploadFileName[256]; // 已下载成功文件名清单
+    int timeout;              // 进程心跳超时的时间。
+    char procName[51];        // 进程名
 };
 arg_t arg; // 程序运行参数
 /**
@@ -54,20 +52,20 @@ struct fileInfo_t
     }
 };
 cpactive procAct;                                    // 进程心跳
-map<string, string> downloadedFiles;                 // 容器一:存放已经成功下载的文件,从downloadedFileList中加载
-list<fileInfo_t> nlistFiles;                         // 容器二:下载前列出服务端文件名的容器,从nlist文件中加载
-list<fileInfo_t> skippedFiles;                       // 容器三:本次不需要下载的文件
-list<fileInfo_t> filesToDownload;                    // 容器四:本次需要下载的文件
+map<string, string> uploadedFiles;                   // 容器一:存放已经成功上传的文件,uploadFileName中加载
+list<fileInfo_t> nlistFiles;                         // 容器二:下载前列出客户端文件名的容器,从nlist文件中加载
+list<fileInfo_t> skippedFiles;                       // 容器三:本次不需要上传的文件
+list<fileInfo_t> filesToUpload;                      // 容器四:本次需要下载的文件
 void EXIT(int sig);                                  // 程序退出处理函数
 cftpclient ftp;                                      // 创建ftp客户端对象
-void _help();                                        // 帮助文档
+void _help();                                        // 帮助文档·
 clogfile logFile;                                    // 全局日志文件
 bool xmlLoadArg(const char *xmlFile);                // 解析xml文件
-bool loadFilenList();                                // 加载文件
-bool loadDownloadedFiles();                          // 加载已经下载好的文件名
-void cmpContainer();                                 // 比较不同容器的文件信息更新skippedFiles和filesToDownload
-void writeSkippedFiles();                            // 把容器skippedFiles中的数据写入arg,downloadedFileList文件,覆盖之前的
-void appendSkippedFiles(const fileInfo_t &fileInfo); // 把下载成功的文件记录追加到arg.downloadedFileList文件中。
+bool loadLocalFileList();                            // 加载文件
+bool loadUpoadedFiles();                             // 加载已经上传好的文件名
+void cmpContainer();                                 // 比较不同容器的文件信息更新skippedFiles和filesToUpload
+void writeSkippedFiles();                            // 把容器skippedFiles中的数据写入arg,uploadFileName文件,覆盖之前的
+void appendSkippedFiles(const fileInfo_t &fileInfo); // 把上传成功的文件记录追加到arg.uploadFileName文件中。
 int main(int argc, char *argv[])
 {
     // 第一步计划:从服务器某个目录中下载文件,可以指定文件名匹配的规则
@@ -107,16 +105,15 @@ int main(int argc, char *argv[])
         return -1;
     }
     // 调用ftpclient.nlist()方法列出目录中的文件名,保存载本地文件夹中
-    
-    if (ftp.nlist(".", arg.listFileName) == false)
+    if (ftp.nlist(".", sformat("/tmp/nlist/ftpGetFiles_%d.nlist", getpid())) == false)
     {
-        logFile.write("list directory failed, ftp.nlist(%s) failed\n", arg.listFileName);
+        logFile.write("list directory failed, ftp.nlist(%s) failed\n", arg.remotePath);
         return -1;
     }
-    logFile.write("nlist(%s) succeed.\n", arg.listFileName);
+    logFile.write("nlist(%s) ok.\n", sformat("/tmp/nlist/ftpGetFiles_%d.nlist", getpid()).c_str());
     procAct.uptatime(); // 更新进程状态
     // 把ftpclient.nlist()方法获取到的list文件加载到容器nlistFiles中
-    if (loadFilenList() == false)
+    if (loadLocalFileList() == false)
     {
         logFile.write("loadFileList() failed: %s.\n", ftp.response());
         return -1;
@@ -125,15 +122,15 @@ int main(int argc, char *argv[])
     if (arg.pType == 1)
     {
         // 加载已下载的文件信息
-        loadDownloadedFiles();
-        // 比较nlistFiles和downloadedFiles的文件信息,更新skippedFiles和filesToDownload
+        loadUpoadedFiles();
+        // 比较nlistFiles和uploadedFiles的文件信息,更新skippedFiles和filesToUpload
         cmpContainer();
-        // 把容器skippedFiles中的数据写入arg,downloadedFileList文件,覆盖之前的
+        // 把容器skippedFiles中的数据写入arg,uploadFileName文件,覆盖之前的
         writeSkippedFiles();
     }
     else
     {
-        nlistFiles.swap(filesToDownload);
+        nlistFiles.swap(filesToUpload);
     }
     procAct.uptatime(); // 更新进程状态
     // 遍历nlistFiles容器
@@ -167,8 +164,8 @@ int main(int argc, char *argv[])
         }
         else if (arg.pType == 3) // 将文件移动到备份目录
         {
-            string remoteFileBakPath = sformat("%s/%s", arg.remotePathBak, file.fileName.c_str()); // 远程备份目录
-            if (ftp.ftprename(reFileName, remoteFileBakPath) == false)                             // 移动失败
+            string remoteFileBakPath = sformat("%s/%s", arg.localPathBak, file.fileName.c_str()); // 远程备份目录
+            if (ftp.ftprename(reFileName, remoteFileBakPath) == false)                            // 移动失败
             {
                 logFile.write("ftp ftprename(%s,%s),failed:%s\n", reFileName.c_str(), remoteFileBakPath.c_str(), ftp.response());
             }
@@ -191,9 +188,9 @@ void _help()
     //          "<username>wucz</username><password>oracle</password>"\
     //          "<remotepath>/tmp/idc/surfdata</remotepath><localpath>/idcdata/surfdata</localpath>"\
     //          "<matchname>SURF_ZH*.XML,SURF_ZH*.CSV</matchname>"\
-    //          "<ptype>3</ptype><remotepathbak>/tmp/idc/surfdatabak</remotepathbak>\"\n\n");
+    //          "<ptype>3</ptype><localPathBak>/tmp/idc/surfdatabak</localPathBak>\"\n\n");
     printf("Sample:\n\
-/project/tools/bin/procctl 30 /project/dataOpenPlatform/tools/bin/ftpGetFiles /log/idc/ftpGetFiles_test.log \"<host>111.228.47.8:21</host>\n\
+/project/tools/bin/procctl 30 /project/dataOpenPlatform/tools/bin/ftpPutFiles /log/idc/ftpPutFiles_test.log \"<host>111.228.47.8:21</host>\n\
 <mode>1</mode>\n\
 <username>yes</username>\n\
 <password>123456789yes</password>\n\
@@ -201,11 +198,10 @@ void _help()
 <localPath>/tmp/idc/ftp/client/download/surfdata</localPath>\n\
 <matchName>SURF_ZH*.XML,SURF_ZH*.CSV,SURF_ZH*.JSON</matchName>\n\
 <pType>1</pType>\n\
-<remotePathBak>/srv/FTPServer/bak</remotePathBak>\n\
-<downloadedFileList>/tmp/idc/ftp/client/ftpGetFiles.xml</downloadedFileList>\n\
+<localPathBak>/srv/FTPServer/bak</localPathBak>\n\
+<uploadFileName>/tmp/idc/ftp/client/ftpGetFiles.xml</uploadFileName>\n\
 <timeout>30</timeout>\n\
-<procName>ftpgetfiles_test</procName>\n\
-<checkEditTime>true</checkEditTime>\"\n\n\n");
+<procName>ftpgetfiles_test</procName>\n\n\n");
 
     printf("本程序是通用的功能模块，用于把远程ftp服务端的文件下载到本地目录。\n");
     printf("logfilename是本程序运行的日志文件。\n");
@@ -218,11 +214,9 @@ void _help()
     printf("<localPath>/idcdata/surfdata</localPath> 本地文件存放的目录。\n");
     printf("<matchName>SURF_ZH*.XML,SURF_ZH*.CSV</matchName> 待下载文件匹配的规则。"
            "不匹配的文件不会被下载，本字段尽可能设置精确，不建议用*匹配全部的文件。\n");
-    printf("<listFileName>/idcdata/ftplist/ftpGetFiles_surfdata.list</listFileName> 下载前列出服务器文件夹下的文件并保存到本地文件的位置\n");
     printf("<pType>1</pType> 文件下载成功后远程服务端的处理方式: 1.什么也不做; 2.删除 3.备份;如果为3还要指定备份的目录\n");
-    printf("<remotePathBak></remotePathBak> 文件下载成功后,服务端文件的备份目录, 此参数只有当ptype为3时才生效。\n");
-    printf("<downloadedFileList></downloadedFileList> 已下载成功文件名清单。此参数只有pType=1时生效\n");
-    printf("<checkEditTime>true</checkEditTime> 是否需要检查服务端文件的时间。true需要,false不需要;此参数只有pType=1时生效。\n\n\n");
+    printf("<localPathBak></localPathBak> 文件下载成功后,服务端文件的备份目录, 此参数只有当ptype为3时才生效。\n");
+    printf("<uploadFileName></uploadFileName> 已下载成功文件名清单。此参数只有pType=1时生效\n\n\n");
 }
 /**
  * @brief        : 加载xml文件
@@ -283,34 +277,25 @@ bool xmlLoadArg(const char *xmlFile)
         logFile.write("ftp matchName is null.\n");
         return false;
     }
-
-    getxmlbuffer(xmlFile, "listFileName", arg.listFileName, 100); // 获取待下载文件匹配的规则
-    if (strlen(arg.listFileName) == 0)                            // 待下载文件匹配的规则为空
-    {
-        logFile.write("ftp listFileName is null.\n");
-        return false;
-    }
-
     getxmlbuffer(xmlFile, "pType", arg.pType); // 获取下载文件后服务器的下载方式
     if (arg.pType == 1)
     {
-        getxmlbuffer(xmlFile, "downloadedFileList", arg.downloadedFileList);
-        if (strlen(arg.downloadedFileList) == 0)
+        getxmlbuffer(xmlFile, "uploadFileName", arg.uploadFileName);
+        if (strlen(arg.uploadFileName) == 0)
         {
-            logFile.write("downloadedFileList bak is null\n");
+            logFile.write("uploadFileName bak is null\n");
             return false;
         }
-        getxmlbuffer(xmlFile, "checkEditTime", arg.checkEditTime);
     }
     else if (arg.pType == 2)
     {
     }
     else if (arg.pType == 3)
     {
-        getxmlbuffer(xmlFile, "remotePathBak", arg.remotePathBak);
-        if (strlen(arg.remotePathBak) == 0)
+        getxmlbuffer(xmlFile, "localPathBak", arg.localPathBak);
+        if (strlen(arg.localPathBak) == 0)
         {
-            logFile.write("remote path bak is null\n");
+            logFile.write("local path bak is null\n");
             return false;
         }
     }
@@ -337,41 +322,27 @@ bool xmlLoadArg(const char *xmlFile)
  * @brief        : 将获取到的list文件加载到nlistFiles容器中
  * @return        {bool} : 加载成功返回true,否则返回false
  **/
-bool loadFilenList()
+bool loadLocalFileList()
 {
     nlistFiles.clear();
-    cifile InFile;
-
-    if (InFile.open(sformat("/tmp/nlist/ftpGetFiles_%d.nlist", getpid())) == false) // 文件打开失败
+    cdir dir;
+    if (dir.opendir(arg.localPath, arg.matchName) == false)
     {
-        logFile.write("Infile.open(%s) failed. \n", sformat("/tmp/nlist/ftpGetFiles_%d.nlist", getpid()));
+        logFile.write("dir.opendir(%s) failed.\n", arg.localPath);
         return false;
     }
 
     string strFileName; // 存取读取的一行
     while (true)
     {
-        if (InFile.readline(strFileName) == false) // 读取一行失败
+        if (dir.readdir() == false) // 读取一行失败
         {
             break;
         }
 
-        if (matchstr(strFileName, arg.matchName) == false) // 是否匹配文件名规则, 不匹配不下载
-        {
-            continue;
-        }
-        if (arg.pType == 1 && arg.checkEditTime == true)
-        {
-            // 获取ftp服务器文件时间
-            if (ftp.mtime(strFileName) == false)
-            {
-                logFile.write("ftp.mtime(%s) failed: %s\n", strFileName, ftp.response());
-            }
-        }
-        nlistFiles.emplace_back(strFileName, ftp.m_mtime); // 加入容器
+        nlistFiles.emplace_back(dir.m_filename, dir.m_mtime); // 加入容器
     }
 
-    InFile.closeandremove(); // 关闭
     for (auto &file : nlistFiles)
     {
         logFile.write("fileName = %s,editTime=%s\n", file.fileName.c_str(), file.editTime.c_str());
@@ -380,20 +351,15 @@ bool loadFilenList()
     return true;
 }
 /**
- * @brief        : 加载已经下载的文件名到容器一downloadedFilesName中
+ * @brief        : 加载已经下载的文件名到容器一uploadedFilesName中
  * @return        {*}
  **/
-bool loadDownloadedFiles()
+bool loadUpoadedFiles()
 {
-    if (arg.pType != 1)
-    {
-        return true;
-    }
-
-    downloadedFiles.clear();
+    uploadedFiles.clear();
     cifile inFile;
-    // 如果程序第一次运行,arg.downloadedFileList是不存在的，并不是错误，所以也返回true。
-    if (inFile.open(arg.downloadedFileList) == false)
+    // 如果程序第一次运行,arg.uploadFileName是不存在的，并不是错误，所以也返回true。
+    if (inFile.open(arg.uploadFileName) == false)
     {
         return true;
     }
@@ -405,62 +371,54 @@ bool loadDownloadedFiles()
         getxmlbuffer(stringBuffer, "fileName", fileInfo.fileName);
         getxmlbuffer(stringBuffer, "editTime", fileInfo.editTime);
 
-        downloadedFiles[fileInfo.fileName] = fileInfo.editTime;
+        uploadedFiles[fileInfo.fileName] = fileInfo.editTime;
     }
 
-    // for (const auto &[fileName, editTime] : downloadedFiles)
+    // for (const auto &[fileName, editTime] : uploadedFiles)
     // {
     //     logFile.write("fileName = %s , editTime = %s\n", fileName, editTime);
     // }
     return true;
 }
 /**
- * @brief        : 比较不同容器的文件信息更新skippedFiles和filesToDownload
+ * @brief        : 比较不同容器的文件信息更新skippedFiles和filesToUpload
  * @return        {void}
  **/
 void cmpContainer()
 {
-    filesToDownload.clear();
+    filesToUpload.clear();
     skippedFiles.clear();
-
     // 遍历nlistFiles
     for (const auto &nFile : nlistFiles)
     {
-        auto it = downloadedFiles.find(nFile.fileName); // 在已下载的文件中查找nlistFiles中的文件,
-        if (it == downloadedFiles.end())                // 未找到,需要下载
+        auto it = uploadedFiles.find(nFile.fileName); // 在已下载的文件中查找nlistFiles中的文件,
+        if (it == uploadedFiles.end())                // 未找到,需要上传
         {
-            filesToDownload.push_back(nFile);
+            filesToUpload.push_back(nFile);
             continue;
         }
         // 找到了
-        if (arg.checkEditTime) // 开启判断文件时间
-        {
-            if (it->second == nFile.editTime) // 时间相同不需要下载
-            {
-                skippedFiles.push_back(nFile);
-            }
-            else // 时间不同需要下载
-            {
-                filesToDownload.push_back(nFile);
-            }
-        }
-        else // 未开启,不需要重新下载
+        if (it->second == nFile.editTime) // 时间相同不需要下载
         {
             skippedFiles.push_back(nFile);
+        }
+        else // 时间不同需要下载
+        {
+            filesToUpload.push_back(nFile);
         }
     }
 }
 /**
- * @brief        : 把容器skippedFiles中的数据写入arg,downloadedFileList文件,覆盖之前的
+ * @brief        : 把容器skippedFiles中的数据写入arg,uploadFileName文件,覆盖之前的
  * @return        {*}
  **/
 void writeSkippedFiles()
 {
     cofile outFile;
 
-    if (outFile.open(arg.downloadedFileList) == false)
+    if (outFile.open(arg.uploadFileName) == false)
     {
-        logFile.write("outFile.open(%s) failed.", arg.downloadedFileList);
+        logFile.write("outFile.open(%s) failed.", arg.uploadFileName);
     }
 
     for (const auto &skippedFile : skippedFiles)
@@ -470,7 +428,7 @@ void writeSkippedFiles()
     outFile.closeandrename();
 }
 /**
- * @brief        : 把下载成功的文件记录追加到arg.downloadedFileList文件中。
+ * @brief        : 把下载成功的文件记录追加到arg.uploadFileName文件中。
  * @param         {fileInfo_t&} fileInfo: 文件信息
  * @return        {void}
  **/
@@ -478,9 +436,9 @@ void appendSkippedFiles(const fileInfo_t &fileInfo)
 {
     cofile outFile;
 
-    if (outFile.open(arg.downloadedFileList, false, ios::app) == false)
+    if (outFile.open(arg.uploadFileName, false, ios::app) == false)
     {
-        logFile.write("outFile.open(%s) failed.\n", arg.downloadedFileList);
+        logFile.write("outFile.open(%s) failed.\n", arg.uploadFileName);
         return;
     }
     outFile.writeline("<fileName>%s</fileName>\n<editTime>%s</editTime>", fileInfo.fileName.c_str(), fileInfo.editTime.c_str());
