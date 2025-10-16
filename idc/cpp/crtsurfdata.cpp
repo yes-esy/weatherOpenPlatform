@@ -3,8 +3,8 @@
  * @Description  :  生成气象站点观测的分钟数据
  * @Author       : 2900226123@qq.com
  * @Version      : 0.0.1
- * @LastEditors  : yes-esy 2900226123@qq.com
- * @LastEditTime : 2025-10-05 15:12:58
+ * @LastEditors  : shengYang 2900226123@qq.com
+ * @LastEditTime : 2025-10-16 11:00:10
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 #include "_public.h"
@@ -18,7 +18,7 @@ struct sitePosition_t
 {
     char provinceName[31]; // 省名
     char siteId[11];       // 站号
-    char siteName[31];     // 站明
+    char cityName[31];     // 站明
     double latitude;       // 纬度；
     double longtitude;     // 经度
     double height;         // 高度
@@ -143,7 +143,7 @@ bool loadSitePosition(const string &inFile)
 
         cmdstr.getvalue(0, sitePosition.provinceName, 30); // 省
         cmdstr.getvalue(1, sitePosition.siteId, 10);       // 站点代码
-        cmdstr.getvalue(2, sitePosition.siteName, 30);     // 站名
+        cmdstr.getvalue(2, sitePosition.cityName, 30);     // 站名
         cmdstr.getvalue(3, sitePosition.latitude);         // 纬度
         cmdstr.getvalue(4, sitePosition.longtitude);       // 经度
         cmdstr.getvalue(5, sitePosition.height);           // 高度
@@ -154,8 +154,8 @@ bool loadSitePosition(const string &inFile)
     // 把容器中的全部数据写入日志
     // for (const auto &site : siteList)
     // {
-    //     logFile.write("provinceName=%s,siteId=%s,siteName=%s,latitude=%.2f,longtitude=%.2f,height=%.2f\n",\
-    //     site.provinceName,site.siteId,site.siteName,site.latitude,site.longtitude,site.height);
+    //     logFile.write("provinceName=%s,siteId=%s,cityName=%s,latitude=%.2f,longtitude=%.2f,height=%.2f\n",\
+    //     site.provinceName,site.siteId,site.cityName,site.latitude,site.longtitude,site.height);
     // }
 
     return true;

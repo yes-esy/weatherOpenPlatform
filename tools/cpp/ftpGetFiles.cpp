@@ -3,8 +3,8 @@
  * @Description  :  文件下载模块
  * @Author       : yes-esy 2900226123@qq.com
  * @Version      : 0.0.1
- * @LastEditors  : yes-esy 2900226123@qq.com
- * @LastEditTime : 2025-10-11 20:47:54
+ * @LastEditors  : shengYang 2900226123@qq.com
+ * @LastEditTime : 2025-10-14 18:58:49
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 
@@ -41,7 +41,7 @@ struct fileInfo_t
     string fileName;                                                                                            // 文件名
     string editTime;                                                                                            // 修改列表
     fileInfo_t() = default;                                                                                     // 默认构造函数
-    fileInfo_t(const string &InfileName, const string &InEditTime) : fileName(InfileName), editTime(InEditTime) // 含参构造函数
+    fileInfo_t(const string &inFileName, const string &InEditTime) : fileName(inFileName), editTime(InEditTime) // 含参构造函数
     {
     }
     /**
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     // 解析xml,得到程序的运行参数
     if (xmlLoadArg(argv[2]) == false)
     {
-        logFile.write("解析xml文件失败 xmlLoadArg(%s),\n", argv[1]);
+        logFile.write("解析xml文件失败 xmlLoadArg(%s),\n", argv[2]);
         return -1;
     }
     procAct.addpinfo(arg.timeout, arg.procName);
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
         return -1;
     }
     // 调用ftpclient.nlist()方法列出目录中的文件名,保存载本地文件夹中
-    
+
     if (ftp.nlist(".", arg.listFileName) == false)
     {
         logFile.write("list directory failed, ftp.nlist(%s) failed\n", arg.listFileName);
@@ -193,13 +193,14 @@ void _help()
     //          "<matchname>SURF_ZH*.XML,SURF_ZH*.CSV</matchname>"\
     //          "<ptype>3</ptype><remotepathbak>/tmp/idc/surfdatabak</remotepathbak>\"\n\n");
     printf("Sample:\n\
-/project/tools/bin/procctl 30 /project/dataOpenPlatform/tools/bin/ftpGetFiles /log/idc/ftpGetFiles_test.log \"<host>111.228.47.8:21</host>\n\
+/project/dataOpenPlatform/tools/bin/procctl 30 /project/dataOpenPlatform/tools/bin/ftpGetFiles /log/idc/ftpGetFiles_test.log \"<host>111.228.47.8:21</host>\n\
 <mode>1</mode>\n\
 <username>yes</username>\n\
 <password>123456789yes</password>\n\
 <remotePath>/srv/FTPServer</remotePath>\n\
 <localPath>/tmp/idc/ftp/client/download/surfdata</localPath>\n\
 <matchName>SURF_ZH*.XML,SURF_ZH*.CSV,SURF_ZH*.JSON</matchName>\n\
+<listFileName>/idcdata/ftplist/ftpGetFiles_surfdata.list</listFileName> \n\
 <pType>1</pType>\n\
 <remotePathBak>/srv/FTPServer/bak</remotePathBak>\n\
 <downloadedFileList>/tmp/idc/ftp/client/ftpGetFiles.xml</downloadedFileList>\n\
@@ -283,13 +284,12 @@ bool xmlLoadArg(const char *xmlFile)
         logFile.write("ftp matchName is null.\n");
         return false;
     }
-
     getxmlbuffer(xmlFile, "listFileName", arg.listFileName, 100); // 获取待下载文件匹配的规则
-    if (strlen(arg.listFileName) == 0)                            // 待下载文件匹配的规则为空
-    {
-        logFile.write("ftp listFileName is null.\n");
-        return false;
-    }
+    // if (strlen(arg.listFileName) == 0)                            // 待下载文件匹配的规则为空
+    // {
+    //     logFile.write("ftp listFileName is null.\n");
+    //     return false;
+    // }
 
     getxmlbuffer(xmlFile, "pType", arg.pType); // 获取下载文件后服务器的下载方式
     if (arg.pType == 1)
@@ -340,18 +340,18 @@ bool xmlLoadArg(const char *xmlFile)
 bool loadFilenList()
 {
     nlistFiles.clear();
-    cifile InFile;
+    cifile inFile;
 
-    if (InFile.open(sformat("/tmp/nlist/ftpGetFiles_%d.nlist", getpid())) == false) // 文件打开失败
+    if (inFile.open(arg.listFileName) == false) // 文件打开失败
     {
-        logFile.write("Infile.open(%s) failed. \n", sformat("/tmp/nlist/ftpGetFiles_%d.nlist", getpid()));
+        logFile.write("inFile.open(%s) failed. \n", arg.listFileName);
         return false;
     }
 
     string strFileName; // 存取读取的一行
     while (true)
     {
-        if (InFile.readline(strFileName) == false) // 读取一行失败
+        if (inFile.readline(strFileName) == false) // 读取一行失败
         {
             break;
         }
@@ -371,7 +371,7 @@ bool loadFilenList()
         nlistFiles.emplace_back(strFileName, ftp.m_mtime); // 加入容器
     }
 
-    InFile.closeandremove(); // 关闭
+    inFile.closeandremove(); // 关闭
     for (auto &file : nlistFiles)
     {
         logFile.write("fileName = %s,editTime=%s\n", file.fileName.c_str(), file.editTime.c_str());
@@ -483,7 +483,7 @@ void appendSkippedFiles(const fileInfo_t &fileInfo)
         logFile.write("outFile.open(%s) failed.\n", arg.downloadedFileList);
         return;
     }
-    outFile.writeline("<fileName>%s</fileName>\n<editTime>%s</editTime>", fileInfo.fileName.c_str(), fileInfo.editTime.c_str());
+    outFile.writeline("<fileName>%s</fileName>\n<editTime>%s</editTime>\n", fileInfo.fileName.c_str(), fileInfo.editTime.c_str());
 }
 /**
  * @brief        : 处理程序退出和信号2、15的处理函数

@@ -3,8 +3,8 @@
  * @Description  :  文件上传模块
  * @Author       : yes-esy 2900226123@qq.com
  * @Version      : 0.0.1
- * @LastEditors  : yes-esy 2900226123@qq.com
- * @LastEditTime : 2025-10-11 19:46:32
+ * @LastEditors  : shengYang 2900226123@qq.com
+ * @LastEditTime : 2025-10-14 19:03:14
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 
@@ -190,7 +190,7 @@ void _help()
     //          "<matchname>SURF_ZH*.XML,SURF_ZH*.CSV</matchname>"\
     //          "<ptype>3</ptype><localPathBak>/tmp/idc/surfdatabak</localPathBak>\"\n\n");
     printf("Sample:\n\
-/project/tools/bin/procctl 30 /project/dataOpenPlatform/tools/bin/ftpPutFiles /log/idc/ftpPutFiles_test.log \"<host>111.228.47.8:21</host>\n\
+/project/dataOpenPlatform/tools/bin/procctl 30 /project/dataOpenPlatform/tools/bin/ftpPutFiles /log/idc/ftpPutFiles_test.log \"<host>111.228.47.8:21</host>\n\
 <mode>1</mode>\n\
 <username>yes</username>\n\
 <password>123456789yes</password>\n\
@@ -201,7 +201,7 @@ void _help()
 <localPathBak>/srv/FTPServer/bak</localPathBak>\n\
 <uploadFileName>/tmp/idc/ftp/client/ftpGetFiles.xml</uploadFileName>\n\
 <timeout>30</timeout>\n\
-<procName>ftpgetfiles_test</procName>\n\n\n");
+<procName>ftpgetfiles_test</procName>\"\n\n\n");
 
     printf("本程序是通用的功能模块，用于把远程ftp服务端的文件下载到本地目录。\n");
     printf("logfilename是本程序运行的日志文件。\n");
