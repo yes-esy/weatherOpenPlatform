@@ -4,7 +4,7 @@
  * @Author       : yes-esy 2900226123@qq.com
  * @Version      : 0.0.1
  * @LastEditors  : shengYang 2900226123@qq.com
- * @LastEditTime : 2025-10-14 18:58:49
+ * @LastEditTime : 2025-10-17 15:54:16
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 
@@ -107,10 +107,9 @@ int main(int argc, char *argv[])
         return -1;
     }
     // 调用ftpclient.nlist()方法列出目录中的文件名,保存载本地文件夹中
-
     if (ftp.nlist(".", arg.listFileName) == false)
     {
-        logFile.write("list directory failed, ftp.nlist(%s) failed\n", arg.listFileName);
+        logFile.write("list directory failed, ftp.nlist(\".\",arg.listFileName(%s)) failed\n", arg.listFileName);
         return -1;
     }
     logFile.write("nlist(%s) succeed.\n", arg.listFileName);
@@ -186,23 +185,23 @@ void _help()
     printf("\n");
     printf("Using:/project/dataOpenPlatform/tools/bin/ftpGetFiles logfilename xmlbuffer\n\n");
 
-    //printf("Sample:/peoject/dataOpenPlatform/tools/bin/procctl 30 /peoject/dataOpenPlatform/tools/bin/ftpGetFiles /log/idc/ftpGetFiles_surfdata.log " \
-    //          "\"<host>192.168.150.128:21</host><mode>1</mode>"\
-    //          "<username>wucz</username><password>oracle</password>"\
-    //          "<remotepath>/tmp/idc/surfdata</remotepath><localpath>/idcdata/surfdata</localpath>"\
-    //          "<matchname>SURF_ZH*.XML,SURF_ZH*.CSV</matchname>"\
-    //          "<ptype>3</ptype><remotepathbak>/tmp/idc/surfdatabak</remotepathbak>\"\n\n");
+    // printf("Sample:/peoject/dataOpenPlatform/tools/bin/procctl 30 /peoject/dataOpenPlatform/tools/bin/ftpGetFiles /log/idc/ftpGetFiles_surfdata.log " \
+    //           "\"<host>192.168.150.128:21</host><mode>1</mode>"\
+    //           "<username>wucz</username><password>oracle</password>"\
+    //           "<remotepath>/tmp/idc/surfdata</remotepath><localpath>/idcdata/surfdata</localpath>"\
+    //           "<matchname>SURF_ZH*.XML,SURF_ZH*.CSV</matchname>"\
+    //           "<ptype>3</ptype><remotepathbak>/tmp/idc/surfdatabak</remotepathbak>\"\n\n");
     printf("Sample:\n\
 /project/dataOpenPlatform/tools/bin/procctl 30 /project/dataOpenPlatform/tools/bin/ftpGetFiles /log/idc/ftpGetFiles_test.log \"<host>111.228.47.8:21</host>\n\
 <mode>1</mode>\n\
 <username>yes</username>\n\
 <password>123456789yes</password>\n\
-<remotePath>/srv/FTPServer</remotePath>\n\
+<remotePath>/tmp/ftp-service/idc/surfdata</remotePath>\n\
 <localPath>/tmp/idc/ftp/client/download/surfdata</localPath>\n\
 <matchName>SURF_ZH*.XML,SURF_ZH*.CSV,SURF_ZH*.JSON</matchName>\n\
 <listFileName>/idcdata/ftplist/ftpGetFiles_surfdata.list</listFileName> \n\
 <pType>1</pType>\n\
-<remotePathBak>/srv/FTPServer/bak</remotePathBak>\n\
+<remotePathBak>/tmp/ftp-service/bak</remotePathBak>\n\
 <downloadedFileList>/tmp/idc/ftp/client/ftpGetFiles.xml</downloadedFileList>\n\
 <timeout>30</timeout>\n\
 <procName>ftpgetfiles_test</procName>\n\

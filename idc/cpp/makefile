@@ -21,7 +21,7 @@ ORACPP = /project/dataOpenPlatform/public/db/oracle/_ooci.cpp
 # 编译参数。
 CFLAGS = -g
 
-all:crtsurfdata obtainCodeToDB
+all:crtsurfdata obtainCodeToDB obtainMindToDB
 
 crtsurfdata:crtsurfdata.cpp
 	g++ $(CFLAGS) -o crtsurfdata crtsurfdata.cpp $(PUBINCL) $(PUBCPP) -lm -lc
@@ -31,6 +31,8 @@ obtainCodeToDB:obtainCodeToDB.cpp
 	g++ $(CFLAGS) -o obtainCodeToDB obtainCodeToDB.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP)
 	cp -f obtainCodeToDB ../bin/.
 
-
+obtainMindToDB:obtainMindToDB.cpp idc_app.cpp
+	g++ $(CFLAGS) -o obtainMindToDB obtainMindToDB.cpp idc_app.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL) $(ORALIB) $(ORALIBS) $(ORACPP)
+	cp -f obtainMindToDB ../bin/.
 clean:
-	rm -f crtsurfdata obtainCodeToDB
+	rm -f crtsurfdata obtainCodeToDB obtainMindToDB
