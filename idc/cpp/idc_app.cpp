@@ -1,10 +1,10 @@
 /**
- * @FilePath     : /dataOpenPlatform/idc/cpp/idc_app.cpp
+ * @FilePath     : /project/dataOpenPlatform/idc/cpp/idc_app.cpp
  * @Description  :  此程序是共享平台项目公用函数和类的定义文件。
  * @Author       : shengYang 2900226123@qq.com
  * @Version      : 0.0.1
  * @LastEditors  : shengYang 2900226123@qq.com
- * @LastEditTime : 2025-10-17 21:46:03
+ * @LastEditTime : 2025-10-18 17:18:39
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 #include "idc_app.h"
@@ -97,7 +97,7 @@ bool CZHOBTMIND::insertTable()
     {
         // 准备操作表的sql语句,绑定输入参数。
         mStatement.connect(&mDatabaseCon);
-        mStatement.prepare("insert into T_ZHOBTMIND(\"site_id\",\"visit_date\",\"t\",\"p\",\"u\",\"wd\",\"wf\",\"r\",\"vis\",\"key_id\")"
+        mStatement.prepare("insert into T_ZHOBTMIND(site_id,visit_date,t,p,u,wd,wf,r,vis,key_id)"
                            "values(:1,to_date(:2,'yyyymmddhh24miss'),:3,:4,:5,:6,:7,:8,:9,SEQ_ZHOBTMIND.nextval)");
         mStatement.bindin(1, mSurfRecordBind.siteId, 5);
         mStatement.bindin(2, mSurfRecordBind.datetime, 14);
