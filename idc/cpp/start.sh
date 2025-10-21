@@ -58,4 +58,57 @@
 # 把/idcdata/surfdata目录中的气象观测数据文件入库到T_ZHOBTMIND表中。
 /project/dataOpenPlatform/tools/bin/procctl 10 /project/dataOpenPlatform/idc/bin/obtainMindToDB /idcdata/surfdata "idc/idcpwd" "Simplified Chinese_China.AL32UTF8" /log/idc/obtmindtodb.log
 
+# 执行/project/dataOpenPlatform/idc/sql/deletetable.sql脚本，删除T_ZHOBTMIND表两小时之前的数据，如果启用了数据清理程序deletetable，就不必启用这行脚本了。
+/project/dataOpenPlatform/tools/bin/procctl 120 /oracle/home/bin/sqlplus idc/idcpwd @/project/idc/sql/deletetable.sql
 
+# 每隔1小时把T_ZHOBTCODE表中全部的数据抽取出来。
+/project/dataOpenPlatform/tools/bin/procctl 3600 /project/dataOpenPlatform/tools/bin/dMiningOracle /log/idc/dminingoracle_ZHOBTCODE.log \
+"<connectStr>idc/idcpwd</connectStr>\
+<charset>Simplified Chinese_China.AL32UTF8</charset>\
+<selectSQL>select site_id,city_name,province_name,latitude,longitude,height from T_ZHOBTCODE</selectSQL>\
+<fieldStr>obtid,cityname,provname,lat,lon,height</fieldStr>\
+<fieldLen>5,30,30,10,10,10</fieldLen>\
+<bFileName>ZHOBTCODE</bFileName>\
+<eFileName>toidc</eFileName>\
+<outpath>/idcdata/dmindata</outpath>\
+<timeout>30</timeout>\
+<procName>dminingoracle_ZHOBTCODE</procName>"
+
+
+# 每30秒从T_ZHOBTMIND表中增量抽取数据。
+/project/dataOpenPlatform/tools/bin/procctl 30 /project/tools/bin/dminingoracle /log/idc/dminingoracle_ZHOBTMIND.log \
+"<connectStr>idc/idcpwd</connectStr>\
+<charset>Simplified Chinese_China.AL32UTF8</charset>\
+<selectSQL>select site_id,to_char(visit_date,'yyyymmddhh24miss'),t,p,u,wd,wf,r,vis,key_id from T_ZHOBTMIND where  site_id like '5%%'</selectSQL>\
+<fieldStr>site_id,visit_date,t,p,u,wd,wf,r,vis,key_id</fieldStr>\
+<fieldLen>5,19,8,8,8,8,8,8,8,15</fieldLen>\
+<bFileName>ZHOBTMIND</bFileName>\
+<eFileName>togxpt</efilename\
+<outpath>/idcdata/dmindata</outpath>\
+<startTime></startTime>\
+<incrField>key_id</incrField>\
+<incrFileName>/idcdata/dmining/dminingoracle_ZHOBTMIND_togxpt.keyid</incrFileName>\
+<timeout>30</timeout>\
+<procName>dminingoracle_ZHOBTMIND_togxpt</procName>\
+<maxCount>1000</maxCount>\
+<connectStr1>scott/tiger@snorcl11g_128</connectStr1>"
+
+# 清理/idcdata/dmindata目录中文件，防止把空间撑满。
+/project/dataOpenPlatform/tools/bin/procctl 300 /project/tools/bin/deleteFiles /idcdata/dmindata "*" 0.02
+
+# 把/idcdata/xmltodb/vip目录中的xml文件入库到T_ZHOBTCODE1和T_ZHOBTMIND1。
+/project/dataOpenPlatform/tools/bin/procctl 10 /project/tools/bin/xmlToDB /log/idc/xmltodb_vip.log \
+"<connectStr>idc/idcpwd</connectStr>\
+<charset>Simplified Chinese_China.AL32UTF8</charset>\
+<iniFileName>/project/dataOpenPlatform/idc/ini/xmltodb.xml</iniFileName>\
+<xmlPath>/idcdata/xmltodb/vip</xmlPath>\
+<xmlPathBak>/idcdata/xmltodb/vipbak</xmlPathBak>\
+<xmlPathErr>/idcdata/xmltodb/viperr</xmlPathErr>\
+<timeInterval>5</timeInterval>\
+<timeout>50</timeout>\
+<procName>xmltodb_vip</procName>"
+# 注意，观测数据源源不断的入库到T_ZHOBTMIND1中，为了防止表空间被撑满，在/project/idc/sql/deletetable.sql中要配置清理T_ZHOBTMIND1表中历史数据的脚本。
+
+# 清理/idcdata/xmltodb/vipbak和/idcdata/xmltodb/viperr目录中文件。
+/project/dataOpenPlatform/tools/bin/procctl 300 /project/dataOpenPlatform/tools/bin/deleteFiles /idcdata/xmltodb/vipbak "*" 0.02
+/project/dataOpenPlatform/tools/bin/procctl 300 /project/dataOpenPlatform/tools/bin/deleteFiles /idcdata/xmltodb/viperr  "*" 0.02

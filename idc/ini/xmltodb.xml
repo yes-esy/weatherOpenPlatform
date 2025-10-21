@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 
 <!--该参数文件存放了共享平台的入库参数。-->
-<xmltodb>
-  <filename>ZHOBTCODE_*.XML</filename><tname>T_ZHOBTCODE1</tname><uptbz>1</uptbz><execsql>delete from T_ZHOBTCODE1</execsql><endl/>
-  <filename>ZHOBTMIND_*.XML</filename><tname>T_ZHOBTMIND1</tname><uptbz>1</uptbz><endl/>
-</xmltodb>
+<xmlToDB>
+  <fileName>ZHOBTCODE_*.XML</fileName><tableName>T_ZHOBTCODE1</tableName><updateFlag>1</updateFlag><execSQL>delete from T_ZHOBTCODE1</execSQL><endl/>
+  <fileName>ZHOBTMIND_*.XML</fileName><tableName>T_ZHOBTMIND1</tableName><updateFlag>1</updateFlag><execSQL>delete from T_ZHOBTMIND1</execSQL><endl/>
+</xmlToDB>

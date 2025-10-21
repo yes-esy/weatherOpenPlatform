@@ -1,10 +1,10 @@
 /**
- * @FilePath     : /dataOpenPlatform/idc/cpp/crtsurfdata.cpp
+ * @FilePath     : /project/dataOpenPlatform/idc/cpp/crtsurfdata.cpp
  * @Description  :  生成气象站点观测的分钟数据
  * @Author       : 2900226123@qq.com
  * @Version      : 0.0.1
  * @LastEditors  : shengYang 2900226123@qq.com
- * @LastEditTime : 2025-10-16 11:00:10
+ * @LastEditTime : 2025-10-21 13:56:00
  * @Copyright    : G AUTOMOBILE RESEARCH INSTITUTE CO.,LTD Copyright (c) 2025.
  **/
 #include "_public.h"
@@ -29,7 +29,7 @@ struct sitePosition_t
 struct surfData_t
 {
     char siteId[11];   // 站点代码
-    char datetime[15]; // 数据时间: 格式yyyymmddhh24miss,精确到分钟，秒固定天00.
+    char visitDate[15]; // 数据时间: 格式yyyymmddhh24miss,精确到分钟，秒固定天00.
     int t;             // 气温: 单位，0.1摄氏度
     int p;             // 气压: 单位，0.1百帕
     int u;             // 相对湿度:0-100之间的值
@@ -175,7 +175,7 @@ void generateVisdata()
         memset(&surfData, 0, sizeof(surfData_t)); // 初始化
 
         strcpy(surfData.siteId, site.siteId);   // 站点代码
-        strcpy(surfData.datetime, strDatetime); // 填充时间
+        strcpy(surfData.visitDate, strDatetime); // 填充时间
         surfData.t = rand() % 350;              // 气温
         surfData.p = rand() % 265 + 10000;      // 气压
         surfData.u = rand() % 101;              // 相对湿度
@@ -231,18 +231,18 @@ bool writeSurfFile(const string &outpath, const string &datafmt)
         if (datafmt == "csv")
         {
             outFile.writeline("%s,%s,%.1f,%.1f,%d,%d,%.1f,%.1f,%.1f\n",
-                              data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
+                              data.siteId, data.visitDate, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
         }
         if (datafmt == "xml")
         {
-            outFile.writeline("<siteId>%s</siteId><datetime>%s</datetime><t>%.1f</t><p>%.1f</p><u>%d</u>"
+            outFile.writeline("<siteId>%s</siteId><visit_date>%s</visit_date><t>%.1f</t><p>%.1f</p><u>%d</u>"
                               "<wd>%d</wd><wf>%.1f</wf><r>%.1f</r><vis>%.1f</vis><endl/>\n",
-                              data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
+                              data.siteId, data.visitDate, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
         }
         if (datafmt == "json")
         {
-            outFile.writeline("{\"siteId\":\"%s\",\"datetime\":\"%s\",\"t\":\"%.1f\",\"p\":\"%.1f\",\"u\":\"%d\",\"wd\":\"%d\",\"wf\":\"%.1f\",\"r\":\"%.1f\",\"vis\":\"%.1f\"}",
-                              data.siteId, data.datetime, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
+            outFile.writeline("{\"siteId\":\"%s\",\"visit_date\":\"%s\",\"t\":\"%.1f\",\"p\":\"%.1f\",\"u\":\"%d\",\"wd\":\"%d\",\"wf\":\"%.1f\",\"r\":\"%.1f\",\"vis\":\"%.1f\"}",
+                              data.siteId, data.visitDate, data.t / 10.0, data.p / 10.0, data.u, data.wd, data.wf / 10.0, data.r / 10.0, data.vis / 10.0);
             idx++;
             if (idx < total)
                 outFile.writeline(",\n");
