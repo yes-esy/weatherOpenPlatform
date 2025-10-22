@@ -25,7 +25,7 @@ CFLAGS = -g
 # CFLAGS = -O2
 
 
-all:procctl checkproc deleteFiles gzipFiles ftpGetFiles ftpPutFiles dMiningOracle xmlToDB
+all:procctl checkproc deleteFiles gzipFiles ftpGetFiles ftpPutFiles dMiningOracle xmlToDB deleteTable
  
 procctl:procctl.cpp
 		g++ -g -o procctl procctl.cpp
@@ -56,5 +56,8 @@ dMiningOracle:dMiningOracle.cpp
 xmlToDB:xmlToDB.cpp
 	g++ $(CFLAGS) -o xmlToDB xmlToDB.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL)  $(ORALIB) $(ORALIBS) $(ORACPP) _tools.cpp
 	cp -f xmlToDB ../bin/.
+deleteTable:deleteTables.cpp
+	g++ $(CFLAGS) -o deleteTable deleteTables.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL)  $(ORALIB) $(ORALIBS) $(ORACPP) 
+	cp -f deleteTable ../bin/.
 clean:
-		rm -rf procctl checkproc deleteFiles gzipFiles ftpGetFiles ftpPutFiles dMiningOracle xmlToDB
+		rm -rf procctl checkproc deleteFiles gzipFiles ftpGetFiles ftpPutFiles dMiningOracle xmlToDB deleteTable
