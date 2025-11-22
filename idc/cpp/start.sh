@@ -112,3 +112,13 @@
 # 清理/idcdata/xmltodb/vipbak和/idcdata/xmltodb/viperr目录中文件。
 /project/dataOpenPlatform/tools/bin/procctl 300 /project/dataOpenPlatform/tools/bin/deleteFiles /idcdata/xmltodb/vipbak "*" 0.02
 /project/dataOpenPlatform/tools/bin/procctl 300 /project/dataOpenPlatform/tools/bin/deleteFiles /idcdata/xmltodb/viperr  "*" 0.02
+
+/project/dataOpenPlatform/tools/bin/procctl 3600 /project/dataOpenPlatform/tools/bin/deletetable /log/idc/deletetable_ZHOBTMIND1.log \
+           "<connStr>idc/idcpwd</connStr>\
+           <tableName>T_ZHOBTMIND1</tableName>\
+           <keyCol>rowid</keyCol>\
+           <where>where ddatetime<sysdate-0.03</where>\
+           <maxCount>10</maxCount>\
+           <startTime>22,23,00,01,02,03,04,05,06,13</startTime>\
+           <timeout>120</timeout>\
+           <procName>deletetable_ZHOBTMIND1</procName>\

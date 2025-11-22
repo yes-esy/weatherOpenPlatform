@@ -25,7 +25,7 @@ CFLAGS = -g
 # CFLAGS = -O2
 
 
-all:procctl checkproc deleteFiles gzipFiles ftpGetFiles ftpPutFiles dMiningOracle xmlToDB deleteTable
+all:procctl checkproc deleteFiles gzipFiles ftpGetFiles ftpPutFiles dMiningOracle xmlToDB deleteTable migrateTable syncRef syncIncr
  
 procctl:procctl.cpp
 		g++ -g -o procctl procctl.cpp
@@ -59,5 +59,15 @@ xmlToDB:xmlToDB.cpp
 deleteTable:deleteTables.cpp
 	g++ $(CFLAGS) -o deleteTable deleteTables.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL)  $(ORALIB) $(ORALIBS) $(ORACPP) 
 	cp -f deleteTable ../bin/.
+migrateTable:migrateTable.cpp
+	g++ $(CFLAGS) -o migrateTable migrateTable.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL)  $(ORALIB) $(ORALIBS) $(ORACPP) _tools.cpp
+	cp -f migrateTable ../bin/.
+syncRef:syncRef.cpp
+	g++ $(CFLAGS) -o syncRef syncRef.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL)  $(ORALIB) $(ORALIBS) $(ORACPP) _tools.cpp
+	cp -f syncRef ../bin/.
+
+syncIncr:syncIncr.cpp
+	g++ $(CFLAGS) -o syncIncr syncIncr.cpp $(PUBINCL) $(PUBCPP) $(ORAINCL)  $(ORALIB) $(ORALIBS) $(ORACPP) _tools.cpp
+	cp -f syncIncr ../bin/.
 clean:
-		rm -rf procctl checkproc deleteFiles gzipFiles ftpGetFiles ftpPutFiles dMiningOracle xmlToDB deleteTable
+		rm -rf procctl checkproc deleteFiles gzipFiles ftpGetFiles ftpPutFiles dMiningOracle xmlToDB deleteTable migrateTable syncRef syncIncr
